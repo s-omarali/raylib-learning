@@ -1,26 +1,25 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Build Raylib Game",
-            "type": "shell",
-            "command": "g++",
-            "args": [
-                "main.cpp",
-                "-IC:\\raylib\\include",
-                "-LC:\\raylib\\lib",
-                "-lraylib",
-                "-lopengl32",
-                "-lgdi32",
-                "-lwinmm",
-                "-o",
-                "game.exe"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": ["$gcc"]
-        }
-    ]
+    "label": "Build Raylib Game",
+    "type": "shell",
+    "command": "C:/msys64/ucrt64/bin/g++.exe",
+    "options": {
+        "cwd": "${workspaceFolder}"
+    },
+    "args": [
+        "main.cpp",
+        "-g",
+        "-IC:\\raylib\\include",
+        "-LC:\\raylib\\lib",
+        "-lraylib",
+        "-lopengl32",
+        "-lgdi32",
+        "-lwinmm",
+        "-o",
+        "C:\\msys64\\ucrt64\\bin\\game.exe"
+    ],
+    "group": {
+        "kind": "build",
+        "isDefault": true
+    },
+    "problemMatcher": ["$gcc"]
 }
