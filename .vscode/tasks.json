@@ -6,7 +6,7 @@
         "cwd": "${workspaceFolder}"
     },
     "args": [
-        "main.cpp",
+        "${file}",
         "-g",
         "-IC:\\raylib\\include",
         "-LC:\\raylib\\lib",
@@ -15,7 +15,7 @@
         "-lgdi32",
         "-lwinmm",
         "-o",
-        "C:\\msys64\\ucrt64\\bin\\game.exe"
+        "${fileDirname}/${fileBasenameNoExtension}.exe"
     ],
     "group": {
         "kind": "build",
