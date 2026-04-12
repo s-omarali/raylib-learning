@@ -176,6 +176,7 @@ int main()
         };
         Vector2 origin = {0.0f, 0.0f};
 
+        DrawRectangle(0, 500, window_width, 100, GREEN);    // grass    
         DrawTexturePro(currentAnim.texture, sourceRec, destRec, origin, 0.0f, WHITE);
                 
         // DrawTextureRec(soldier, TextureSingleFrame, player1.pos, WHITE);
