@@ -2,6 +2,7 @@
 #include "raymath.h"
 #include "iostream"
 #include "string"
+#include "game_physics.h"
 using namespace std;
 
 // states for the player
@@ -28,6 +29,7 @@ struct Player {
     State state; // determine which Texture to use
     int currentFrame; // which frame in the sprite are we at
     float frameTimer; // the duration of that frame
+    VerticalPhysics vphys; // vertical physics of the player
 };
 
 int main()
@@ -43,19 +45,22 @@ int main()
     player.health = 100; // TODO: gotta work on health logic, health bar, etc.
     player.currentFrame = 0;
     player.frameTimer = 0.0f;
+    player.vphys.on_ground = true; // initialize that the player is initially on the ground
+
+    // gravity constants
+    const float gravity = 1800.0f;
+    const float jumpImpulse = 400.0f;
 
     InitWindow(window_width,window_height,"Soldier Window");
 
     // load player models to use in Animation struct
-    Texture2D soldier = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Soldier/Soldier/Soldier-Idle.png");
-
     Texture2D soldierIdle = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Soldier/Soldier/Soldier-Idle.png");
     Texture2D soldierWalking = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Soldier/Soldier/Soldier-Walk.png");
     Texture2D soldierAttacking = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Soldier/Soldier/Soldier-Attack01.png");
     Texture2D soldierHurt = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Soldier/Soldier/Soldier-Hurt.png");
     Texture2D soldierDead = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Soldier/Soldier/Soldier-Death.png");
     
-    SetTextureFilter(soldier, TEXTURE_FILTER_POINT);
+    SetTextureFilter(soldierIdle, TEXTURE_FILTER_POINT);
     Animation anims[5]; // List of animations. An animation for each State. index with State
 
     // have an animation for each state
@@ -90,19 +95,46 @@ int main()
         float delta = GetFrameTime(); // for 120 fps. 1/120.
         // speed is 200, 200*.0083 = 3.33. makes the movement independent of the fps.
 
-        // movement keys. TODO: no up or down , just left and right
-        if (IsKeyDown(KEY_S)) {player.pos.y += player.speed * delta;} // since 0,0 is at the top left, y increases downward
-        if (IsKeyDown(KEY_W)) {player.pos.y -= player.speed * delta;} 
+        // // movement keys. TODO: no up or down , just left and right
+        // if (IsKeyDown(KEY_S)) {player.pos.y += player.speed * delta;} // since 0,0 is at the top left, y increases downward
+        // if (IsKeyDown(KEY_W)) {player.pos.y -= player.speed * delta;} 
         if (IsKeyDown(KEY_A)) {player.pos.x -= player.speed * delta;} 
         if (IsKeyDown(KEY_D)) {player.pos.x += player.speed * delta;}
 
+        // JUMPING WITH GRAVITY
+        if (IsKeyDown(KEY_SPACE) && player.vphys.on_ground) // if jump is pressed and player is not on ground
+        {
+            player.vphys.velocityY = -jumpImpulse; // y grows downward. to go up we must decrease y. velocity y = -jumpImpulse + gravity * deltaT. at apex, velocityY approaches 0
+            player.vphys.on_ground = false; 
+
+        }
+        float groundY = (float)window_height - soldierDrawHeight; // where the ground is (if i want to add gravity for the platforms, i would change this to be the position before jump is pressed)
+        // UpdateVerticalPhys will update players y position upon jumping. 
+        bool justLanded = UpdateVerticalPhysics(player.pos.y, player.vphys, delta, gravity, groundY); // if true, we can add an audio queue or effect for landing
+
         Animation &currentAnim = anims[player.state];
+        // change state to move if player moving
         if (player.state != ATTACK && player.state != HURT && player.state != DEATH)
         {
             bool moving = IsKeyDown(KEY_A) || IsKeyDown(KEY_D);
             player.state = moving ? WALK : IDLE; // if player is moving, state = WALK, else IDLE
         }
-        // if (IsKeyDown(KEY_S)) player1.pos.y += 2.0f;
+    
+        // change state to attack
+       if (player.state != ATTACK && (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_LEFT))) 
+        {
+            // go through the whole sprite upon click, meaning the animation wont cancel. we set the frame to 0 and frametimer to 0 so the sprite fully completes.
+            player.state = ATTACK;
+            player.currentFrame = 0;
+            player.frameTimer = 0.0f;
+        }
+
+        // after the animation
+        if (player.state == ATTACK && player.currentFrame == anims[ATTACK].maxFrames - 1 && player.frameTimer == 0.0f) 
+        {
+            bool moving = IsKeyDown(KEY_A) || IsKeyDown(KEY_D);
+            player.state = moving ? WALK : IDLE;
+        }
 
         // need to clamp each render loop
         player.pos.x = Clamp(player.pos.x, 0.0f, (float)window_width-soldierDrawWidth);
@@ -150,7 +182,7 @@ int main()
         
         DrawFPS(10,10);
         DrawText("Block moving window", 10,30,20,BLACK);
-        cout << player.state;
+        // cout << player.state;
         EndDrawing();
     }
     // UnloadTexture(p.texture);

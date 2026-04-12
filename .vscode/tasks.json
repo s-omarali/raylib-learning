@@ -6,7 +6,8 @@
         "cwd": "${workspaceFolder}"
     },
     "args": [
-        "${file}",
+        "game_with_models/game.cpp",
+        "game_with_models/game_physics.cpp",
         "-g",
         "-IC:\\raylib\\include",
         "-LC:\\raylib\\lib",
