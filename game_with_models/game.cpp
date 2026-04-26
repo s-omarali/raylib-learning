@@ -14,7 +14,8 @@ enum State {
     DEATH
 };
 
-struct Animation {
+struct Animation 
+{
     Texture2D texture;
     int frameWidth = 100; // 100 x 100 frames
     int frameHeight = 100;
@@ -22,7 +23,8 @@ struct Animation {
     float frameDuration = 0.10f; // how long the frame will last
 };
 
-struct Player {
+struct Player
+{
     Vector2 pos; // x and y position
     float speed; // movement speed
     int health; // health lol
@@ -32,8 +34,23 @@ struct Player {
     VerticalPhysics vphys; // vertical physics of the player
 };
 
+struct Enemy
+{
+    Vector2 pos;
+    int health;
+    // bool alive;
+    State state;
+    int curentFrame;
+    float frameTimer;
+};
+
 int main()
 {
+    
+    // TODO: implement enemy death on collision with attack
+    // TODO: show health bars. main player health bar and small enemy health bar over enemy
+    // TODO: implement world scrolling/ world coordinates/ etc.
+    // TODO: get an actual grass texture
     int window_width = 800;
     int window_height = 600;
 
@@ -46,6 +63,14 @@ int main()
     player.currentFrame = 0;
     player.frameTimer = 0.0f;
     player.vphys.on_ground = true; // initialize that the player is initially on the ground
+    cout << "SOLDIER POSITION --------------------------------------------"<< player.pos.y << endl;
+    // initialize enemy
+    Enemy firstEnemy;
+    firstEnemy.pos = {600,350};
+    firstEnemy.health = 100;
+    firstEnemy.state = IDLE;
+    firstEnemy.curentFrame = 0;
+    firstEnemy.frameTimer = 0.0f;
 
     // gravity constants
     const float gravity = 1800.0f;
@@ -59,9 +84,17 @@ int main()
     Texture2D soldierAttacking = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Soldier/Soldier/Soldier-Attack01.png");
     Texture2D soldierHurt = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Soldier/Soldier/Soldier-Hurt.png");
     Texture2D soldierDead = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Soldier/Soldier/Soldier-Death.png");
+
+    // enemy sprites
+    Texture2D enemyIdle = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Orc/Orc/Orc-Idle.png");
+    Texture2D enemyHurt = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Orc/Orc/Orc-Hurt.png");
+    Texture2D enemyDead = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Orc/Orc/Orc-Death.png");
+    Texture2D enemyAttack = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Orc/Orc/Orc-Attack.png");
+    Texture2D enemyWalk = LoadTexture("Tiny RPG Character Asset Pack v1.03b -Free Soldier&Orc/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Orc/Orc/Orc-Walk.png");
     
     SetTextureFilter(soldierIdle, TEXTURE_FILTER_POINT);
     Animation anims[5]; // List of animations. An animation for each State. index with State
+    Animation enemyAnims[5]; 
 
     // have an animation for each state
     anims[IDLE] = {soldierIdle};
@@ -69,6 +102,13 @@ int main()
     anims[ATTACK] = {soldierAttacking};
     anims[HURT] = {soldierHurt};
     anims[DEATH] = {soldierDead};
+
+    // enemy anims
+    enemyAnims[IDLE] = {enemyIdle};
+    enemyAnims[WALK] = {enemyWalk};
+    enemyAnims[ATTACK] = {enemyAttack};
+    enemyAnims[HURT] = {enemyHurt};
+    enemyAnims[DEATH] = {enemyDead};
 
     // pick the animation based on the players current state
     
@@ -113,6 +153,7 @@ int main()
         bool justLanded = UpdateVerticalPhysics(player.pos.y, player.vphys, delta, gravity, groundY); // if true, we can add an audio queue or effect for landing
 
         Animation &currentAnim = anims[player.state];
+        Animation &enemyCurrentAnim = enemyAnims[firstEnemy.state];
         // change state to move if player moving
         if (player.state != ATTACK && player.state != HURT && player.state != DEATH)
         {
@@ -174,12 +215,23 @@ int main()
             currentAnim.frameWidth * soldierScale,
             currentAnim.frameHeight * soldierScale
         };
+
+        // enemy shit
+        Rectangle enemyDestRec = {
+            firstEnemy.pos.x,
+            firstEnemy.pos.y,
+            enemyCurrentAnim.frameWidth * soldierScale,
+            enemyCurrentAnim.frameHeight * soldierScale
+        };
         Vector2 origin = {0.0f, 0.0f};
 
         DrawRectangle(0, 500, window_width, 100, GREEN);    // grass    
         DrawTexturePro(currentAnim.texture, sourceRec, destRec, origin, 0.0f, WHITE);
                 
         // DrawTextureRec(soldier, TextureSingleFrame, player1.pos, WHITE);
+        // TODO: DRAW ENEMY 
+        DrawTexturePro(enemyCurrentAnim.texture, sourceRec, enemyDestRec, origin, 0.0f, WHITE);
+        
         
         DrawFPS(10,10);
         DrawText("Block moving window", 10,30,20,BLACK);
